@@ -4,8 +4,8 @@ volatile int pulseCount = 0; // Contador de pulsos
 float totalLiters = 0.0; // Total de litros contados
 unsigned long lastTime = 0; // Tempo da última leitura
 const unsigned long interval = 10000; // Intervalo de tempo para cálculos (em milissegundos, 10 segundos)
-const float pulsesPerLiter = 7.5; // Pulsos por litro para o sensor YF-S201
-float alpha = 52.66;//53.5;
+const float pulsesPerLiter = 450; // Pulsos por litro para o sensor YF-S201
+float alpha = 1.077;//53.5;
 
 void setup() {
   // Inicializa o pino do sensor como entrada
