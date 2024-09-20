@@ -3,15 +3,15 @@
 #include <WiFiClientSecure.h>
 #include <ESP_Mail_Client.h> // Biblioteca para envio de e-mail
 
-const char* ssid = "brisa-1761350";
-const char* password = "xhwd107q";
+const char* ssid = "Wi-fi";
+const char* password = "password";
 
-const char* serverName = "https://script.google.com/macros/s/AKfycbzUxnpDp_jvjggB1rU2zm7-Pvo9sRHgR5CEHdh0Q_BAJfYI1Guqicnp0XTzczArUQ3G/exec";
+const char* serverName = "https://script.google.com/macros/s/insertSheetCode/exec";
 
 // Configuração do SMTP
-const char* emailSender = "dan.mmascar@gmail.com";
-const char* emailSenderPassword = "sdvdlnpmriavesrk";
-const char* emailRecipient = "dan.mmascar@gmail.com"; // Mesma conta para enviar e receber
+const char* emailSender = "email@gmail.com";
+const char* emailSenderPassword = "emailPassword";
+const char* emailRecipient = "email.mmascar@gmail.com"; // Mesma conta para enviar e receber
 const char* smtpServer = "smtp.gmail.com";
 const int smtpPort = 465;
 
@@ -21,10 +21,11 @@ SMTP_Message message;
 
 unsigned long lastFlowDetectedTime = 0;
 unsigned long lastEmailSentTime = 0;
-unsigned long lastDataReceivedTime = 0;
 const unsigned long oneMinuteDuration = 60000; // 1 minuto em milissegundos
-const unsigned long fiveMinutesDuration = 300000; // 5 minutos em milissegundos
+const unsigned long twentyFourHoursDuration = 86400000; // 24 horas em milissegundos
+const unsigned long oneHourDuration = 3600000; // 1 hora em milissegundos
 bool flowStoppedForOneMinute = false;
+bool emailSent = false; // Flag para verificar se o e-mail foi enviado
 
 void setup() {
   Serial.begin(115200);
@@ -87,29 +88,34 @@ void loop() {
     flowStoppedForOneMinute = true;  // Marca que o fluxo foi interrompido por pelo menos 1 minuto
   }
 
-  // Verifica se se passaram 5 minutos desde o último e-mail
-  if (currentTime - lastEmailSentTime >= fiveMinutesDuration) {
-    // Se o fluxo foi contínuo nos últimos 5 minutos (ou seja, não houve interrupção de 1 minuto)
+  // Verifica se se passaram 24 horas desde o último e-mail
+  if (currentTime - lastEmailSentTime >= twentyFourHoursDuration) {
+    // Se o fluxo foi contínuo nas últimas 24 horas (ou seja, não houve interrupção de 1 minuto)
     if (!flowStoppedForOneMinute) {
       sendEmail();
       lastEmailSentTime = currentTime;
+      emailSent = true;
       
-      // Aqui atualizamos lastFlowDetectedTime para garantir que a condição seja verificada novamente nos próximos 5 minutos
+      // Atualiza o tempo do último fluxo detectado para garantir que a condição seja verificada novamente nas próximas 24 horas
       lastFlowDetectedTime = currentTime;
     }
-
-    // Reseta a variável para monitorar o próximo período de 5 minutos
-    flowStoppedForOneMinute = false;
+  } 
+  // Se um e-mail foi enviado e 1 hora se passou desde o último e-mail
+  else if (emailSent && currentTime - lastEmailSentTime >= oneHourDuration) {
+    if (!flowStoppedForOneMinute) {
+      sendEmail();
+      lastEmailSentTime = currentTime;
+    }
   }
 }
 
 void sendEmail() {
   // Configurar a mensagem de e-mail
-  message.sender.name = "Nome";
+  message.sender.name = "Sensor de Fluxo";
   message.sender.email = emailSender;
-  message.subject = "Alerta de Fluxo Contínuo nos Últimos 5 Minutos";
+  message.subject = "Fluxo Anormal Detectado";
   message.addRecipient("Destinatário", emailRecipient);
-  message.text.content = "O fluxo de dados foi contínuo nos últimos 5 minutos, sem interrupção de 1 minuto. Verifique o sistema.";
+  message.text.content = "Nas últimas 24 horas, foi detectado um fluxo contínuo de água sem interrupção de 1 minuto. Existe um alerta de possível vazamento. Verifique o sistema.";
 
   // Conectar ao servidor SMTP e enviar o e-mail
   if (!smtp.connect(&mailSession)) {
