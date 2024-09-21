@@ -19,12 +19,12 @@ SMTPSession smtp;
 ESP_Mail_Session mailSession;
 SMTP_Message message;
 
-unsigned long lastFlowDetectedTime = 0;
-unsigned long lastEmailSentTime = 0;
-const unsigned long oneMinuteDuration = 60000; // 1 minuto em milissegundos
-const unsigned long twentyFourHoursDuration = 86400000; // 24 horas em milissegundos
-const unsigned long oneHourDuration = 3600000; // 1 hora em milissegundos
-bool flowStoppedForOneMinute = false;
+unsigned long ultimaDeteccaoFluxo = 0;
+unsigned long ultimoEmailEnviado = 0;
+const unsigned long umMinutoEmMilisegundos = 60000; // 1 minuto em milissegundos
+const unsigned long umDiaEmMilisegundos = 86400000; // 24 horas em milissegundos
+const unsigned long horaEmMilisegundos = 3600000; // 1 hora em milissegundos
+bool fluxoParado = false;
 bool emailSent = false; // Flag para verificar se o e-mail foi enviado
 
 void setup() {
@@ -76,35 +76,35 @@ void loop() {
       http.end();  // Encerra a conexão
 
       // Atualiza o tempo do último fluxo detectado
-      lastFlowDetectedTime = currentTime;
-      flowStoppedForOneMinute = false;  // Indica que o fluxo está ativo
+      ultimaDeteccaoFluxo = currentTime;
+      fluxoParado = false;  // Indica que o fluxo está ativo
     }
   } else {
     Serial.println("WiFi desconectado");
   }
 
   // Verifica se o fluxo parou por 1 minuto
-  if ((currentTime - lastFlowDetectedTime >= oneMinuteDuration) && !flowStoppedForOneMinute) {
-    flowStoppedForOneMinute = true;  // Marca que o fluxo foi interrompido por pelo menos 1 minuto
+  if ((currentTime - ultimaDeteccaoFluxo >= umMinutoEmMilisegundos) && !fluxoParado) {
+    fluxoParado = true;  // Marca que o fluxo foi interrompido por pelo menos 1 minuto
   }
 
   // Verifica se se passaram 24 horas desde o último e-mail
-  if (currentTime - lastEmailSentTime >= twentyFourHoursDuration) {
+  if (currentTime - ultimoEmailEnviado >= umDiaEmMilisegundos) {
     // Se o fluxo foi contínuo nas últimas 24 horas (ou seja, não houve interrupção de 1 minuto)
-    if (!flowStoppedForOneMinute) {
+    if (!fluxoParado) {
       sendEmail();
-      lastEmailSentTime = currentTime;
+      ultimoEmailEnviado = currentTime;
       emailSent = true;
       
       // Atualiza o tempo do último fluxo detectado para garantir que a condição seja verificada novamente nas próximas 24 horas
-      lastFlowDetectedTime = currentTime;
+      ultimaDeteccaoFluxo = currentTime;
     }
   } 
   // Se um e-mail foi enviado e 1 hora se passou desde o último e-mail
-  else if (emailSent && currentTime - lastEmailSentTime >= oneHourDuration) {
-    if (!flowStoppedForOneMinute) {
+  else if (emailSent && currentTime - ultimoEmailEnviado >= horaEmMilisegundos) {
+    if (!fluxoParado) {
       sendEmail();
-      lastEmailSentTime = currentTime;
+      ultimoEmailEnviado = currentTime;
     }
   }
 }
