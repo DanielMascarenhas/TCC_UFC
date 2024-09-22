@@ -11,7 +11,7 @@ const char* serverName = "https://script.google.com/macros/s/insertSheetCode/exe
 // Configuração do SMTP
 const char* emailSender = "email@gmail.com";
 const char* emailSenderPassword = "emailPassword";
-const char* emailRecipient = "email.mmascar@gmail.com"; // Mesma conta para enviar e receber
+const char* emailRecipient = "email@gmail.com"; // Mesma conta para enviar e receber
 const char* smtpServer = "smtp.gmail.com";
 const int smtpPort = 465;
 
